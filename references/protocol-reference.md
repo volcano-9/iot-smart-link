@@ -35,7 +35,31 @@
 - 车辆/工程机械 → CAN + J1939 报文解析，经车载终端上云
 - 产线实时控制 → PROFINET/EtherCAT 留在现场层，边缘汇聚后按分钟级上云
 
-## 三、物模型示例（属性/事件/服务三元组）
+## 三、物模型与测点（属性/事件/服务 + 测点层）
+
+物模型不能只写属性/事件/服务——**每个属性背后必须落到具体测点（measurement point / tag）**，否则设备侧采不到、平台侧解析不了，联调必然返工。
+
+分层关系：产品 → 设备 → 物模型（属性/事件/服务）→ **测点**（设备侧最小采集单元，映射到物理通道/寄存器/报文位置）
+
+### 3.1 测点定义字段（缺一项都可能在联调时返工）
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| 测点编码 tag | 设备内唯一，建议 `设备类型_物理量_序号` | TH_TEMP_01 |
+| 关联属性 identifier | 对应物模型属性 | temperature |
+| 数据类型 | bool/int16/int32/float32/double/enum/string | float32 |
+| 采集通道 | 协议 + 地址定位 | Modbus：slave=1, FC=03, addr=0x0000；OPC UA：`ns=2;s=Ch1.Dev1.Temp` |
+| 字节序/字序 | 大端 ABCD / 小端 DCBA / 字交换 CDAB、BADC | CDAB（float32 最常踩的坑） |
+| 缩放系数与偏移 | 工程值 = 原始值 × 系数 + 偏移 | ×0.1, +0 |
+| 单位 | 与属性单位一致 | ℃ |
+| 量程 | min/max，用于超量程判定 | -40 / 85 |
+| 采集周期 | 秒，可与上报周期不同 | 300 |
+| 死区/变化阈值 | 变化超过阈值才上报 | 0.2 |
+| 质量码 | 有效 / 超量程 / 通讯故障 / 无效 | 0 = 有效 |
+| 告警阈值 | 高 / 低 / 高高 / 低低 | 高 60℃ |
+| 安装位置 | 物理位置，便于现场排查 | 1#车间东侧 |
+
+### 3.2 物模型 JSON 示例（含测点映射）
 
 ```json
 {
@@ -50,9 +74,31 @@
   ],
   "services": [
     { "identifier": "reboot", "name": "重启设备", "callType": "sync", "inputData": [], "outputData": [{ "identifier": "result", "dataType": "bool" }] }
+  ],
+  "measurementPoints": [
+    {
+      "tag": "TH_TEMP_01", "property": "temperature", "dataType": "float32",
+      "channel": "modbus:slave=1,fc=03,addr=0x0000", "byteOrder": "CDAB",
+      "scale": 0.1, "offset": 0, "unit": "℃", "min": -40, "max": 85,
+      "sampleInterval": 300, "deadband": 0.2, "qualityCode": "valid",
+      "alarm": { "high": 60, "low": -10 }, "location": "1#车间东侧"
+    },
+    {
+      "tag": "TH_HUMI_01", "property": "humidity", "dataType": "float32",
+      "channel": "modbus:slave=1,fc=03,addr=0x0002", "byteOrder": "CDAB",
+      "scale": 0.1, "offset": 0, "unit": "%RH", "min": 0, "max": 100,
+      "sampleInterval": 300, "deadband": 0.5, "qualityCode": "valid"
+    }
   ]
 }
 ```
+
+### 3.3 测点设计四条铁律
+
+1. **一一映射**：一个属性至少对应一个测点；同一物理量分布在多个位置时，用不同 tag 区分（如 `A区_TEMP_01`、`B区_TEMP_01`），不得合并成一个属性
+2. **地址可追溯**：测点必须记录通道地址与解析规则（寄存器/对象路径/报文偏移），否则现场换表、换网关后无法重映射
+3. **字节序先验证**：float32 读数明显离谱（如 1.2e-38、几万度）时，先怀疑字节序/字序，而不是传感器损坏
+4. **质量码不可省**：必须区分"数值为 0"与"采集失败"，否则数据质量分析会把通讯故障当成真实读数
 
 ## 四、Topic 命名惯例
 - 属性上报：`sys/{productKey}/{deviceName}/thing/event/property/post`
