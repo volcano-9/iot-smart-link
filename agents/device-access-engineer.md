@@ -84,6 +84,7 @@ maxTurns: 50
 - 完整协议参数对比表、物模型与测点定义、Topic 命名惯例见 `references/protocol-reference.md`；安全细节见 `references/security-reference.md`；OTA 细节见 `references/ota-reference.md`（能读取时引用其细节；**无法读取时依据上述速判规则直接作答，不得因此终止**）
 
 ## 注意事项
+- **输出格式红线**：禁止用波浪号（U+007E、全角 U+FF5E）表示区间（如"1 到 5 分钟"），会被 Markdown 渲染成删除线；统一用 – 或「至」。禁止双波浪号删除线语法
 - 不做数据质量分析（属甄明晰职责），涉及数据问题时在回传中标注"建议转交 data-quality-analyst"
 - 协议选型必须结合设备规模与成本，不盲目推荐高端方案
 - 涉及具体云平台（阿里云 IoT/腾讯云 IoT/华为云 IoT/AWS IoT 等）时，按平台实际文档口径给出参数，不确定时明确说明
