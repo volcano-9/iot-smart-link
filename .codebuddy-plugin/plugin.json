@@ -1,0 +1,70 @@
+{
+  "name": "iot-smart-link",
+  "version": "1.0.0",
+  "description": "An IoT expert team for device onboarding, data quality inspection and IoT solution consulting.",
+  "agents": [
+    "./agents/iot-smart-link-team-lead.md",
+    "./agents/device-access-engineer.md",
+    "./agents/data-quality-analyst.md"
+  ],
+
+  "expertType": "team",
+  "agentName": "iot-smart-link-team-lead",
+  "teamInfo": {
+    "leadAgent": "iot-smart-link-team-lead",
+    "memberAgents": ["device-access-engineer", "data-quality-analyst"]
+  },
+
+  "displayName": {
+    "en": "IoT SmartLink Experts",
+    "zh": "IoT 智联专家"
+  },
+  "profession": {
+    "en": "IoT SmartLink Experts",
+    "zh": "IoT 智联专家"
+  },
+  "displayDescription": {
+    "en": "An expert team covering device onboarding, data quality inspection and end-to-end IoT solution consulting.",
+    "zh": "精通设备接入与物模型设计，擅长多协议对接与数据质量检查，提供物联网平台选型、架构设计与上云方案咨询。"
+  },
+  "avatar": "avatars/team.png",
+  "categoryId": "12-IndustryConsultant",
+  "defaultInitPrompt": {
+    "zh": "我想把一批传感器设备接入物联网平台，帮我选择接入协议并设计物模型。",
+    "en": "I want to connect a batch of sensor devices to an IoT platform. Help me choose protocols and design the thing model."
+  },
+  "plugin": "iot-smart-link",
+  "tags": [
+    { "en": "Device Onboarding", "zh": "设备接入" },
+    { "en": "Data Quality", "zh": "数据质量" },
+    { "en": "IoT Solutions", "zh": "物联网方案" }
+  ],
+  "quickPrompts": [
+    { "en": "I want to connect a batch of sensor devices to an IoT platform. Help me choose protocols and design the thing model.", "zh": "我想把一批传感器设备接入物联网平台，帮我选择接入协议并设计物模型。" },
+    { "en": "Help me check the quality of device-reported data and find missing, delayed and abnormal data.", "zh": "帮我检查设备上报数据的质量，找出缺失、迟到和异常数据。" },
+    { "en": "Help me design an IoT cloud solution (platform selection, architecture and cost) for a smart factory.", "zh": "帮我设计一个智慧工厂的物联网上云方案，包括平台选型、架构与成本估算。" }
+  ],
+  "members": [
+    {
+      "id": "iot-smart-link-team-lead",
+      "name": { "en": "Duanmu", "zh": "端木联" },
+      "profession": { "en": "IoT Solutions Architect", "zh": "物联网解决方案架构师" },
+      "avatar": "avatars/iot-smart-link-team-lead.png",
+      "role": "lead"
+    },
+    {
+      "id": "device-access-engineer",
+      "name": { "en": "Ge", "zh": "葛连通" },
+      "profession": { "en": "Device Connectivity Engineer", "zh": "设备接入工程师" },
+      "avatar": "avatars/device-access-engineer.png",
+      "role": "member"
+    },
+    {
+      "id": "data-quality-analyst",
+      "name": { "en": "Zhen", "zh": "甄明晰" },
+      "profession": { "en": "Data Quality Analyst", "zh": "数据质量分析师" },
+      "avatar": "avatars/data-quality-analyst.png",
+      "role": "member"
+    }
+  ]
+}
