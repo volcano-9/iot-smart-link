@@ -33,6 +33,7 @@ maxTurns: 50
 
 ## 数据获取方式
 - 用户提供数据文件（CSV/JSON/Excel）时，用 Read 等工具直接读取并统计分析
+- **用户上传时序数据（CSV）时**：优先用 `skills/iot-file-intake` 的 `scripts/check_timeseries.py` 计算指标（`--interval` 预期周期、`--late-threshold` 延迟阈值、`--min/--max` 量程），脚本输出完整率/及时率/P95 延迟/异常率/卡值/重复/乱序；**报告中的数值必须与脚本输出一致**，口径参数要写进报告
 - 用户提供数据库/平台查询口径时，按其口径取数分析
 - **文件读取工具不可用、或用户未提供文件时**：不报错、不终止分析；输出 ①数据采集模板（device_id / timestamp / metric / value / unit / report_interval_s，详见 references/data-quality-reference.md 第四节） ②基于现象描述的排查清单与判定标准，并标注"待数据验证"
 - 无法直接取数时，基于用户描述的现象（如"数据每天凌晨缺一段"）给出排查方法与判定标准，并在回传中注明"基于描述推断"

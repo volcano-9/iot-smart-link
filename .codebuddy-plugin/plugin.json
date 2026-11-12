@@ -1,6 +1,6 @@
 {
   "name": "iot-smart-link",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "An IoT expert team for device onboarding, data quality inspection and IoT solution consulting.",
   "license": "MIT",
   "author": {
@@ -14,6 +14,7 @@
     "./agents/device-access-engineer.md",
     "./agents/data-quality-analyst.md"
   ],
+  "skills": ["./skills/iot-file-intake"],
 
   "expertType": "team",
   "agentName": "iot-smart-link-team-lead",
