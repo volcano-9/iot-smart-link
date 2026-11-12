@@ -2,6 +2,15 @@
 
 本文件记录专家包的每次迭代。格式：版本 → 变更类别（新增/修复/优化）→ 内容。
 
+## [1.4.1] - 2026-11-12
+
+### 修复（一致性自检发现）
+- 主理人 MD 成员表/能力清单/SOP/Workflow/路由表未同步「测点」能力，已全部补齐
+- 数据分析师输出模板缺「进阶分析」章节（横向对比/交叉校验/时序口径），已新增为第七节并将「待确认信息」顺延为第八节
+- CHANGELOG 中描述问题用的波浪号原文可能再次触发删除线渲染，改为文字表述
+- `displayDescription` 中文由 50 字精简至 44 字（贴近规范区间中部，避免计数差异越界）
+- `keywords` 补充 measurement-point、plc、bacnet 三个搜索词（共 13 个）
+
 ## [1.4.0] - 2026-11-12
 
 ### 新增
@@ -13,7 +22,7 @@
 ## [1.3.1] - 2026-11-12
 
 ### 修复
-- 文档中的数值区间使用 `~`（如 `95~98%`、`¥300~1,500`），成对出现时被 Markdown 渲染器识别为删除线，全部替换为连接号 `–`（共 28 处，涉及 README、主理人 MD、cost-baseline、data-quality-reference、protocol-reference、scenario-checklists）
+- 文档中的数值区间使用波浪号（如 "95 到 98%"、价格区间），成对出现时被 Markdown 渲染器识别为删除线，全部替换为连接号 –（共 28 处，涉及 README、主理人 MD、cost-baseline、data-quality-reference、protocol-reference、scenario-checklists）
 
 ## [1.3.0] - 2026-11-12
 

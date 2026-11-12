@@ -1,6 +1,6 @@
 {
   "name": "iot-smart-link",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "An IoT expert team for device onboarding, data quality inspection and IoT solution consulting.",
   "license": "MIT",
   "author": {
@@ -8,7 +8,7 @@
     "email": "volcano-9@users.noreply.github.com"
   },
   "homepage": "https://github.com/volcano-9/iot-smart-link",
-  "keywords": ["iot", "mqtt", "coap", "modbus", "nb-iot", "lorawan", "thing-model", "device-onboarding", "data-quality", "solution-consulting"],
+  "keywords": ["iot", "mqtt", "coap", "modbus", "nb-iot", "lorawan", "thing-model", "measurement-point", "plc", "bacnet", "device-onboarding", "data-quality", "solution-consulting"],
   "agents": [
     "./agents/iot-smart-link-team-lead.md",
     "./agents/device-access-engineer.md",
@@ -32,7 +32,7 @@
   },
   "displayDescription": {
     "en": "An expert team covering device onboarding, data quality inspection and end-to-end IoT solution consulting.",
-    "zh": "精通设备接入与物模型设计，擅长多协议对接与数据质量检查，提供物联网平台选型、架构设计与上云方案咨询。"
+    "zh": "精通设备接入与物模型测点设计，擅长多协议对接与数据质量检查，提供平台选型与上云方案咨询。"
   },
   "avatar": "avatars/team.png",
   "categoryId": "12-IndustryConsultant",
