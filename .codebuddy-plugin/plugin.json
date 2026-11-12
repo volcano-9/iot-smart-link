@@ -1,6 +1,6 @@
 {
   "name": "iot-smart-link",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "An IoT expert team for device onboarding, data quality inspection and IoT solution consulting.",
   "agents": [
     "./agents/iot-smart-link-team-lead.md",

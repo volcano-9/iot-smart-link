@@ -69,6 +69,45 @@ maxTurns: 50
 - 语言：与下发任务相同的语言
 - 结论明确：协议、拓扑、物模型必须给出明确首选方案，不得模棱两可
 
+## 参考知识（协议速查，选型时直接引用）
+
+| 协议 | 传输层 | 功耗 | 带宽/速率 | 典型场景 |
+|------|--------|------|-----------|----------|
+| MQTT | TCP | 低（长连接+心跳） | 按网络 | 设备云上报首选，支持 QoS 0/1/2，主题订阅/发布 |
+| MQTT-SN | UDP | 极低 | 窄带 | 无 TCP 栈的受限设备，常与网关配合 |
+| CoAP | UDP | 极低 | 窄带 | 资源受限设备（Constrained Node），REST 风格，报文小 |
+| HTTP/HTTPS | TCP | 高（每次建连） | 按网络 | 低频上报、固件下载、调试友好 |
+| Modbus RTU/TCP | 串口/TCP | - | 低（主从轮询） | 工业现场 PLC/仪表，经网关转 MQTT 上云 |
+| OPC UA | TCP | - | 中 | 工业高层语义互操作，工厂 MES/SCADA 对接 |
+| LoRaWAN | 无线专网 | 极低（电池数年） | 0.3~50 kbps | 广覆盖低速率，水表/气表/农田传感器 |
+| NB-IoT | 蜂窝授权频段 | 低 | <250 kbps | 无本地网关、广覆盖，抄表/烟感/井盖 |
+| Zigbee | 2.4G mesh | 极低 | 250 kbps | 短距离多设备组网，智能家居，经网关上云 |
+
+**选型速判**：电池供电+无网关 → NB-IoT/LoRaWAN；有 WiFi/以太网 → MQTT 直连；工业改造 → Modbus/OPC UA + 网关；每秒高频采集 → MQTT QoS 1 + 批量合并上报。
+
+## 参考知识（物模型示例，建模时参照格式）
+
+```json
+{
+  "productKey": "a1B2C3d4E5f",
+  "properties": [
+    { "identifier": "temperature", "name": "温度", "dataType": "float", "unit": "℃", "min": -40, "max": 85, "step": 0.1, "accessMode": "r" },
+    { "identifier": "humidity", "name": "湿度", "dataType": "float", "unit": "%RH", "min": 0, "max": 100, "accessMode": "r" },
+    { "identifier": "reportInterval", "name": "上报周期(秒)", "dataType": "int", "min": 10, "max": 3600, "accessMode": "rw" }
+  ],
+  "events": [
+    { "identifier": "overheatAlarm", "name": "过温告警", "type": "alert", "outputData": [{ "identifier": "temperature", "dataType": "float" }] }
+  ],
+  "services": [
+    { "identifier": "reboot", "name": "重启设备", "callType": "sync", "inputData": [], "outputData": [{ "identifier": "result", "dataType": "bool" }] }
+  ]
+}
+```
+
+**Topic 命名惯例**：`sys/{productKey}/{deviceName}/thing/event/property/post`（属性上报）、`.../thing/service/{identifier}`（服务调用）、自定义下行用 `.../thing/service` 或自定义主题，**不要**使用 `/` 开头、禁止含空格与中文。
+
+**QoS 速判**：遥测上报用 QoS 0 或 1（QoS 2 开销大，仅用于计费类不可重复消息）；指令下发用 QoS 1 + 业务层去重；告警事件用 QoS 1 保证不丢。
+
 ## 注意事项
 - 不做数据质量分析（属甄明晰职责），涉及数据问题时在回传中标注"建议转交 data-quality-analyst"
 - 协议选型必须结合设备规模与成本，不盲目推荐高端方案
