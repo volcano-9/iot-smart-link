@@ -1,7 +1,13 @@
 {
   "name": "iot-smart-link",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "An IoT expert team for device onboarding, data quality inspection and IoT solution consulting.",
+  "author": {
+    "name": "volcano-9",
+    "email": "volcano-9@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/volcano-9/iot-smart-link",
+  "keywords": ["iot", "mqtt", "coap", "modbus", "nb-iot", "lorawan", "thing-model", "device-onboarding", "data-quality", "solution-consulting"],
   "agents": [
     "./agents/iot-smart-link-team-lead.md",
     "./agents/device-access-engineer.md",

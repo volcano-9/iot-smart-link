@@ -1,6 +1,10 @@
 # IoT 智联专家（IoT SmartLink Experts）
 
+**English**: A WorkBuddy expert team for IoT — device onboarding (protocol selection, thing model, gateway topology), device data quality inspection (completeness / timeliness / accuracy / consistency) and end-to-end IoT cloud solution consulting. Team of three: Duanmu (lead, solutions architect), Ge (device connectivity engineer), Zhen (data quality analyst).
+
 物联网全链路专家团队：覆盖设备接入、设备数据质量检查与端到端 IoT 上云方案咨询。
+
+![architecture](docs/architecture.svg)
 
 ## 类型
 
@@ -25,6 +29,23 @@ Team 型（多角色协作团队）
 - 我想把一批传感器设备接入物联网平台，帮我选择接入协议并设计物模型。
 - 帮我检查设备上报数据的质量，找出缺失、迟到和异常数据。
 - 帮我设计一个智慧工厂的物联网上云方案，包括平台选型、架构与成本估算。
+
+## 输出示例（节选）
+
+```markdown
+## 二、质量总评
+**评级：中**。30 台温湿度传感器 11-01~11-07 应上报 302,400 条，实收 286,455 条，
+整体完整率 94.7%（未达 95% 良线），主要受 3 台设备周期性断档拖累；
+异常率 0.8%（阈值 <1% 为良），集中在 2 台湿度传感器疑似卡值。
+
+## 三、四维体检结果（所用阈值：完整率 ≥98% 优 / ≥95% 良；异常率 <1% 良）
+| 维度 | 指标 | 数值 | 结论 |
+|------|------|------|------|
+| 完整性 | 完整率 | 94.7% | 3 台设备每日 02:00-03:00 断档，疑定时重启 |
+| 时效性 | 及时率（延迟≤5s） | 99.2% | 优 |
+| 准确性 | 异常率 | 0.8% | 2 台湿度连续 60+ 周期恒为 65.0%，疑似卡值 |
+| 一致性 | 重复上报 | 1,204 条 | 集中于网络抖动时段，建议 QoS 0→1 |
+```
 
 ## 头像
 
