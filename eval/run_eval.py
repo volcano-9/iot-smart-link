@@ -104,6 +104,41 @@ def cjk_ratio(text: str) -> float:
     return len(CJK.findall(body)) / len(body)
 
 
+def keyword_stuffing_signals(answer: str, case: dict):
+    """启发式：识别「堆关键词但无实质解释」的答案。
+
+    返回信号字符串列表；为空表示无明显堆砌迹象。
+    这是**启发式提示**，不能单独判失败——它只把可疑答案标出来供语义判分重点关注。
+    """
+    signals = []
+    body = strip_code_fences(answer)
+    lines = [l.strip() for l in body.splitlines() if l.strip()]
+
+    # 信号 1：列表项占比过高（大量条目、缺少成段论述）
+    bullets = [l for l in lines if re.match(r"^[-*•]\s|^\d+[.、)]", l)]
+    if len(lines) >= 5 and len(bullets) / len(lines) > 0.75:
+        signals.append("列表项占比 %.0f%%，缺少成段论证" % (100 * len(bullets) / len(lines)))
+
+    # 信号 2：句子过短——大量短句通常是关键词罗列而非解释
+    sentences = [s for s in re.split(r"[。！？!?；;]", body) if s.strip()]
+    if len(sentences) >= 6:
+        short = [s for s in sentences if len(WS.sub("", s)) < 12]
+        if len(short) / len(sentences) > 0.6:
+            signals.append("短句占比 %.0f%%，疑似关键词罗列" % (100 * len(short) / len(sentences)))
+
+    # 信号 3：必备词命中多，但答案里缺少解释性连接词
+    tn = norm(answer)
+    hit_groups = sum(1 for alts in case.get("must_any", []) or []
+                     if any(hit(a, tn) for a in alts))
+    explainers = ["因为", "由于", "原因", "理由", "例如", "比如", "权衡", "取舍", "因此", "所以",
+                  "影响", "前提", "假设", "适用", "不适用", "风险", "trade-off", "because", "since"]
+    n_expl = sum(hit(e, tn) for e in explainers)
+    if hit_groups >= 4 and n_expl == 0:
+        signals.append("命中 %d 组必备词但无任何解释性连接词" % hit_groups)
+
+    return signals
+
+
 # ---------------------------------------------------------------- 判分
 def run_case(case: dict, answer: str, global_rules: dict):
     """返回 (得分, checks 明细列表, 红线明细列表)。"""
@@ -184,6 +219,16 @@ def run_case(case: dict, answer: str, global_rules: dict):
         "detail": "；".join(violations) if violations else "干净",
     })
 
+    # 9. 反关键词堆砌（启发式，只警示不扣分——避免误伤紧凑但合法的答案）
+    stuffing = keyword_stuffing_signals(answer, case)
+    checks.append({
+        "name": "反关键词堆砌（启发式）",
+        "ok": True,  # 不影响自动分，仅作为语义判分的重点关注标记
+        "detail": "；".join(stuffing) if stuffing else "无明显堆砌迹象",
+        "advisory": True,
+        "signals": stuffing,
+    })
+
     passed = sum(1 for c in checks if c["ok"])
     base = round(100 * passed / len(checks)) if checks else 0
     penalty = min(len(violations) * global_rules.get("_penalty", 5),
@@ -246,12 +291,17 @@ def build_report(results, meta, global_rules, answers_dir):
     if not ran:
         verdict = "尚无答案：请按 README 第 2 步把专家回答存到 eval/answers/<用例ID>.md 后再判分"
     elif total >= 85 and red_total == 0 and len(ran) == len(results):
-        verdict = "建议提交审核"
+        verdict = "自动初筛通过，仍须完成语义判分后方可提交"
     elif total >= 85 and red_total == 0:
-        verdict = "已运行用例达标，但覆盖率仅 %d/%d，请补齐后再判定" % (len(ran), len(results))
+        verdict = "自动初筛达标，但覆盖率仅 %d/%d，请补齐后再判定" % (len(ran), len(results))
     else:
         verdict = "不建议提交，先修复下方问题"
     a("**结论：%s**" % verdict)
+    a("")
+    a("> ⚠️ **双轨判分提醒**：本报告的分数是**自动初筛分**（字符串匹配）。")
+    a("> 它能证明「该说的都说了」，但**不能证明「说得对」**——堆砌关键词也能拿高分。")
+    a("> 提交审核前必须运行 `python eval/run_eval.py --judge-pack` 生成语义判分卡，")
+    a("> 由人工或 LLM 逐条判断专业正确性并写理由。**两轨都过才算达标。**")
     a("")
 
     if by_cat:
@@ -324,6 +374,9 @@ def build_report(results, meta, global_rules, answers_dir):
     a("评分规则：每个用例 100 分均摊到各项检查（章节/必备关键词/表格/禁用词/长度/反问数/语种/格式红线），"
       "再按红线命中数每次扣 %d 分（上限 %d 分）；总分按用例权重加权平均。"
       % (global_rules.get("_penalty", 5), global_rules.get("_cap", 20)))
+    a("")
+    a("**这是初筛分，不是最终结论**。反关键词堆砌检查只做标记不扣分（启发式可能误伤），"
+      "其警示会写入机读报告 `report.json` 供语义判分重点关注。最终结论见 `judge_pack.md` 的语义判分结果。")
     return "\n".join(L), total, grade, len(ran), len(skipped), red_total
 
 
@@ -337,6 +390,8 @@ def main():
     ap.add_argument("--only", nargs="*", help="只跑这些用例 id")
     ap.add_argument("--init", action="store_true",
                     help="为缺失答案的用例生成用例卡到 eval/prompts/，便于逐条测试")
+    ap.add_argument("--judge-pack", action="store_true",
+                    help="生成语义判分卡 eval/judge_pack.md（供人工或 LLM 判断答案是否真的正确）")
     ap.add_argument("--strict", action="store_true", help="低于达标线时退出码 1")
     args = ap.parse_args()
 
@@ -358,7 +413,77 @@ def main():
         want = {s.upper() for s in args.only}
         cases = [c for c in cases if c["id"].upper() in want]
 
+    def build_judge_pack(selected_cases):
+        """生成语义判分卡：把答案与人工要点打包，交给人或 LLM 判断「说得对不对」。
+
+        关键词判分只能证明「有没有提到」，无法证明「说得对不对」。
+        判分卡明确要求判分者独立判断，并强制给出理由，避免走过场。
+        """
+        out = []
+        add = out.append
+        add("# 语义判分卡（双轨判分第二轨）")
+        add("")
+        add("> **为什么要这一步**：自动判分只做字符串匹配，答案里堆砌关键词也能拿高分。")
+        add("> 本卡用于判断「答案是否真的正确、具体、符合专业逻辑」。请判分者（人或 LLM）")
+        add("> 逐条给 0 或 1 分，并**强制写出理由**；无理由的判定视为无效。")
+        add("")
+        add("## 判分规则")
+        add("")
+        add("- 每条 rubric 独立打分：`1` = 满足，`0` = 不满足或部分满足")
+        add("- 必须写明理由，引用答案中的具体句子作为证据")
+        add("- 特别警惕：堆砌术语但无解释、结论与依据不符、假装引用不存在的来源")
+        add("- 用例总分 = 命中条数 / 总条数；整体语义分按权重加权，与自动分并列展示")
+        add("")
+        n_pack = 0
+        for c in selected_cases:
+            ap = os.path.join(args.answers, c["id"] + ".md")
+            if not os.path.isfile(ap):
+                continue
+            n_pack += 1
+            with io.open(ap, encoding="utf-8") as f:
+                ans = f.read()
+            add("---")
+            add("")
+            add("## %s %s" % (c["id"], c["title"]))
+            add("")
+            add("**提问**：%s" % c["prompt"])
+            add("")
+            add("**答案**：")
+            add("")
+            add("````text")
+            add(ans.rstrip())
+            add("````")
+            add("")
+            add("**判分表**（请把 `[ ]` 改成 `[x]` 并在理由处填写）：")
+            add("")
+            add("| 得分 | 评审要点 | 理由（必填，引用答案原句） |")
+            add("| --- | --- | --- |")
+            for rb in c.get("rubric", []):
+                add("| `[ ]` 0 / 1 | %s | |" % rb)
+            add("")
+            add("**堆砌警示**（自动启发式，仅供重点关注，不计分）：")
+            add("")
+            signals = keyword_stuffing_signals(ans, c)
+            if signals:
+                for s in signals:
+                    add("- ⚠️ %s" % s)
+            else:
+                add("- 无明显堆砌迹象")
+            add("")
+        out.insert(0, "<!-- 本卡包含 %d 条已运行用例 -->" % n_pack)
+        out.insert(1, "")
+        p = os.path.join(HERE, "judge_pack.md")
+        with io.open(p, "w", encoding="utf-8") as f:
+            f.write("\n".join(out) + "\n")
+        print("已生成语义判分卡（%d 条）-> eval/judge_pack.md" % n_pack)
+        print("请用人工或 LLM 逐条打分并写理由，再据其结论判断能否提交审核。")
+        return n_pack
+
     results = []
+    if args.judge_pack:
+        build_judge_pack(cases)
+        return
+
     if args.init:
         pdir = os.path.join(HERE, "prompts")
         if not os.path.isdir(pdir):
